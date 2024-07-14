@@ -33,6 +33,7 @@ func CreateCourse(c *gin.Context) {
 	c.JSON(http.StatusCreated, newCourse)
 }
 
+
 func DeleteCourse(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -41,16 +42,25 @@ func DeleteCourse(c *gin.Context) {
 	}
 
 	// Verify that the course exists
-    var course dao.Course
-    if err := clients.DB.First(&course, id).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "The specified course does not exist"})
-        return
-    }	
-	if err := services.DeleteCourse(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	var course dao.Course
+	if err := clients.DB.First(&course, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "The specified course does not exist"})
 		return
 	}
-    c.JSON(http.StatusOK, gin.H{"message": "Course successfully deleted"})
+
+	// Delete the subscriptions associated with the course
+	if err := clients.DB.Where("Id_curso = ?", id).Delete(&dao.Subscription{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete subscriptions"})
+		return
+	}
+
+	// Delete the course
+	if err := clients.DB.Delete(&course).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete the course"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Course and associated subscriptions successfully deleted"})
 }
 
 

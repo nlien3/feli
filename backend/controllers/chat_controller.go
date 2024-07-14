@@ -30,7 +30,7 @@ func CreateChatMessage(c *gin.Context) {
 
 		// Verificar que el curso existe
     	var course dao.Course
-    	if err := clients.DB.First(&course, param.IdUsuario).Error; err != nil {
+    	if err := clients.DB.First(&course, param.IdCurso).Error; err != nil {
        	 	c.JSON(http.StatusNotFound, gin.H{"error": "Course not found"})
        	 	return
     	}
